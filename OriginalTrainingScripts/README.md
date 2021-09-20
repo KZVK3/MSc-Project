@@ -1,0 +1,1 @@
+Note: these files should be placed in a directory on google drive, and the data folder should be placed in this directory.

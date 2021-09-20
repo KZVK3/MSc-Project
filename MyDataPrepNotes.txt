@@ -1,0 +1,47 @@
+
+
+\subsection{Finding Experimentally Resolved RNA Structures}
+
+\begin{itemize}
+\item The first step when constructing our dataset was to obtain the PDB codes of complexes containing RNA that have been experimentally resolved. The BGSU RNA group have compiled lists of PDB codes and the corresponding RNA chains by their resolution. We pulled the lists from the BGSU database.
+\item The lists are organised by resolution, the first list contains structures resolved within $1.5\AA$ or less, the next within $2.0\AA$ or less, etc. For the resolutions $\{1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 20.0, \text{all}\}$. There was some missing codes contained in higher resolution lists and not in lower resolution lists. This required recomputing the sets. Then the union of the sets is partitioned into bins of $\{0<r<1.5\AA\}, \{1.5\AA<r<2.0\AA\},...,\{4.0\AA<r<20.0\AA\}, \{20.0\AA<r<\infty\}$. This allows for easier selection of PDB chains based on resolution.
+\item The PDB files for all of the PDB codes collected are pulled from the PDB website.
+\item The PDB files are opened, instantiated in BioPython, the specific chain is selected, and a new PDB and fasta file is written containing only the relevant chain.
+\end{itemize}
+
+\subsection{Finding RNA Families}
+
+\begin{itemize}
+\item The primary resource for RNA families, are the families generated on RFAM. The RFAM fasta files corresponding to each family are pulled and concatenated.
+\item We performed two types of sequence search to the families.
+\item The first sequence search involved using the RFAM sequence search API to run RFAMs search algorithm and obtain a ranked list of hits against RFAM families. This method obtained 677 hits to RFAM families. The majority of sequences did not return a familiy as the e-value was too low.
+\item [Nikita's method] 
+\end{itemize}
+
+\subsection{Cleaning MSA Note}
+
+Roughly $46\%$ of the final MSA files had one or two less bases in taken from the ends of the fasta sequence. To account for these the corresponding bases from the fasta sequence were inserted back, unless the alignment contained a gap adjacent to it, in this case a gap is inserted. This produced sensible looking alignment, with very minor effects to the raw MSA output.
+
+\subsection{Building the Dataset}
+
+Once the training, validation, hold-out sets have been split the dataset can be constructed by reading in the single chain PDB file and the corresponding MSA file, if it exists. The PDB file is parsed and instantiated using BioPython, then an RNA struct is created.
+
+Each base has the following atoms in the backbone:
+
+backbone_order = ["P","OP1","OP2","O5'","C5'","C4'","O4'","C3'","O3'","C2'","O2'","C1'"]
+
+This is how the are stored in PDB. Each base is composed of slightly different atoms:
+
+base_order = {
+  'G':["N9","C8","N7","C5","C6","O6","N1","C2","N2","N3","C4"],
+  'A':["N9","C8","N7","C5","C6","N6","N1","C2","N3","C4"],
+  'C':["N1","C2","O2","N3","C4","N4","C5","C6"],
+  'U':["N1","C2","O2","N3","C4","O4","C5","C6"],
+}
+
+In a PDB file each base has a number of rows to specify the coordinates of each atom in the base. For example 'G' has 23 atoms, 12 in the backbone (backbone_order), 11 in the nucleobase (base_order['G']). 
+
+The bases in the RNA are iterated over. For each of these as mask is created corresponding to each atom present for that residue. For example the mask for 'G' is an array of zeros of size 23, with ones in the indices where the atom is present in the PDB file. Similarly the coordinates for 'G' is an array of zeros of size (23,3) with the coordinates written into the appropriate index (along the first axis) if the atom is present. The temperature factor is also recorded. This is otherwise know as the isotropic B-value.
+
+The raw data is parsed into the RNA structs and dataset is then built and compressed...
+
